@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #171717;
+    --muted: #f5f5f5;
+    --muted-foreground: #666666;
+    --accent: #f5f5f5;
+    --accent-foreground: #171717;
+    --destructive: #e00000;
+    --destructive-foreground: #ffffff;
+    --border: #eaeaea;
+    --input: #eaeaea;
+    --ring: #000000;
+    --radius: 0px;
+  }
+
+  .dark {
+    --background: #000000;
+    --foreground: #ededed;
+    --card: #000000;
+    --card-foreground: #ededed;
+    --popover: #000000;
+    --popover-foreground: #ededed;
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+    --secondary: #111111;
+    --secondary-foreground: #ededed;
+    --muted: #111111;
+    --muted-foreground: #888888;
+    --accent: #171717;
+    --accent-foreground: #ededed;
+    --destructive: #ff3333;
+    --destructive-foreground: #000000;
+    --border: #262626;
+    --input: #262626;
+    --ring: #ffffff;
+    --radius: 0px;
+  }
+}
+
+/* Vercel Sharp Borders Enforcement */
+*,
+*::before,
+*::after {
+  border-radius: 0px !important;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Vercel Grid Backgrounds */
+.vercel-grid {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.dark .vercel-grid {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.vercel-dots {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .vercel-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Vercel Button styles */
+.vercel-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.dark .vercel-btn-primary {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+.vercel-btn-primary:hover {
+  background-color: #222222;
+  color: #ffffff;
+}
+.dark .vercel-btn-primary:hover {
+  background-color: #eaeaea;
+  color: #000000;
+}
+
+.vercel-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: #666666;
+  border: 1px solid #eaeaea;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.dark .vercel-btn-secondary {
+  color: #888888;
+  border-color: #262626;
+}
+.vercel-btn-secondary:hover {
+  color: #000000;
+  border-color: #000000;
+  background-color: #f5f5f5;
+}
+.dark .vercel-btn-secondary:hover {
+  color: #ffffff;
+  border-color: #666666;
+  background-color: #111111;
+}
+
+/* Vercel Card hover transitions */
+.vercel-card {
+  background-color: #ffffff;
+  border: 1px solid #eaeaea;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dark .vercel-card {
+  background-color: #000000;
+  border: 1px solid #262626;
+}
+.vercel-card:hover {
+  border-color: #999999;
+}
+.dark .vercel-card:hover {
+  border-color: #555555;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}

@@ -1,0 +1,324 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  ORGANIZER
+  APPROVER
+  ADMIN
+}
+
+enum IeeeStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum BodyType {
+  GENERAL
+  IEEE
+}
+
+enum EventStatus {
+  DRAFT
+  PENDING_APPROVAL
+  PUBLISHED
+  REGISTRATION_CLOSED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum EventMode {
+  OFFLINE
+  ONLINE
+  HYBRID
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+}
+
+enum FeeType {
+  FREE
+  STANDARD
+  IEEE
+}
+
+enum AttendanceMethod {
+  QR_SCAN
+  MANUAL
+  CSV_BULK
+}
+
+enum CertificateType {
+  PARTICIPATION
+  WINNER
+  RUNNER_UP
+  VOLUNTEER
+  SPEAKER
+}
+
+enum CertificateStatus {
+  VALID
+  REVOKED
+}
+
+enum NotificationType {
+  REGISTRATION
+  WAITLIST
+  CERTIFICATE
+  ANNOUNCEMENT
+  EVENT_UPDATE
+  SYSTEM
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String
+  email            String            @unique
+  passwordHash     String
+  rollNo           String?
+  department       String?
+  year             String?
+  phone            String?
+  role             Role              @default(STUDENT)
+  isActive         Boolean           @default(true)
+  isEmailVerified  Boolean           @default(true) // Set default true per email exclusion
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  ieeeMembership   IeeeMembership?
+  assignedBodies   OrganizerAssignment[]
+  registrations    Registration[]
+  certificates     Certificate[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  attendancesMarked Attendance[]
+
+  @@index([role])
+  @@index([email])
+}
+
+model IeeeMembership {
+  id                 String      @id @default(uuid())
+  userId             String      @unique
+  membershipNumber   String      @unique
+  grade              String      @default("Student Member")
+  expiryDate         DateTime
+  status             IeeeStatus  @default(PENDING)
+  verifiedById       String?
+  rejectionReason    String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([membershipNumber])
+}
+
+model OrganizingBody {
+  id           String               @id @default(uuid())
+  name         String               @unique
+  type         BodyType             @default(GENERAL)
+  description  String?
+  logoUrl      String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  coordinators OrganizerAssignment[]
+  events       Event[]
+
+  @@index([type])
+}
+
+model OrganizerAssignment {
+  id               String         @id @default(uuid())
+  userId           String
+  organizingBodyId String
+  createdAt        DateTime       @default(now())
+
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizingBody   OrganizingBody @relation(fields: [organizingBodyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizingBodyId])
+}
+
+model Event {
+  id                         String             @id @default(uuid())
+  organizingBodyId           String
+  title                      String
+  description                String
+  category                   String             // Workshop, Hackathon, Seminar, Cultural Fest, Technical Fest
+  startDateTime              DateTime
+  endDateTime                DateTime
+  venue                      String
+  mode                       EventMode          @default(OFFLINE)
+  bannerUrl                  String?
+  eligibility                String?            @default("All Students")
+  registrationDeadline       DateTime
+  contactName                String
+  contactEmail               String
+  contactPhone               String
+  seatLimit                  Int
+  seatsConfirmed             Int                @default(0)
+  isFree                     Boolean            @default(false)
+  standardFee                Float              @default(0)
+  ieeeFee                    Float              @default(0)
+  status                     EventStatus        @default(DRAFT)
+  refundPolicy               String?
+  customFields               Json?              @default("[]") // Array of { name, label, type, required, options }
+  isTeamEvent                Boolean            @default(false)
+  minTeamSize                Int                @default(1)
+  maxTeamSize                Int                @default(1)
+  requiresApproval           Boolean            @default(true)
+  rejectionReason            String?
+  requiresAttendanceForCert  Boolean            @default(true)
+  certificateTypes           Json?              @default("[\"PARTICIPATION\"]")
+  createdById                String?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+
+  organizingBody             OrganizingBody     @relation(fields: [organizingBodyId], references: [id])
+  registrations              Registration[]
+  attendances                Attendance[]
+  certificates               Certificate[]
+  certificateTemplates       CertificateTemplate[]
+
+  @@index([status])
+  @@index([category])
+  @@index([startDateTime])
+  @@index([organizingBodyId])
+}
+
+model Registration {
+  id            String             @id @default(uuid())
+  eventId       String
+  userId        String
+  teamName      String?
+  teamMembers   Json?              @default("[]")
+  feeApplied    Float              @default(0)
+  feeType       FeeType            @default(STANDARD)
+  status        RegistrationStatus @default(CONFIRMED)
+  ticketCode    String             @unique
+  qrCode        String?            @db.Text
+  customAnswers Json?              @default("{}")
+  attended      Boolean            @default(false)
+  waitlistOrder Int?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  event         Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendances   Attendance[]
+  certificate   Certificate?
+
+  @@unique([eventId, userId])
+  @@index([eventId, status])
+  @@index([userId])
+  @@index([ticketCode])
+}
+
+model Attendance {
+  id             String           @id @default(uuid())
+  registrationId String
+  eventId        String
+  date           String           // YYYY-MM-DD for multi-day events
+  markedById     String
+  method         AttendanceMethod @default(QR_SCAN)
+  timestamp      DateTime         @default(now())
+
+  registration   Registration     @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  event          Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  markedBy       User             @relation(fields: [markedById], references: [id])
+
+  @@unique([registrationId, date])
+  @@index([eventId, date])
+}
+
+model CertificateTemplate {
+  id             String        @id @default(uuid())
+  eventId        String?
+  name           String
+  signatories    Json?         @default("[]") // [{ name, role, title }]
+  layoutConfig   Json?         @default("{}") // theme color, border style, etc.
+  backgroundUrl  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  event          Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  certificates   Certificate[]
+}
+
+model Certificate {
+  id              String            @id @default(uuid())
+  certificateId   String            @unique // e.g., CERT-2026-XXXXXX
+  registrationId  String            @unique
+  eventId         String
+  userId          String
+  recipientName   String
+  eventTitle      String
+  issueDate       DateTime          @default(now())
+  type            CertificateType   @default(PARTICIPATION)
+  templateId      String?
+  status          CertificateStatus @default(VALID)
+  revokeReason    String?
+  pdfUrl          String?
+  qrCode          String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  registration    Registration      @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  event           Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template        CertificateTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([certificateId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(SYSTEM)
+  isRead    Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  actorName String?
+  actorRole String?
+  action    String   // FEE_CHANGE, CANCEL_EVENT, REVOKE_CERTIFICATE, ROLE_CHANGE, etc.
+  entity    String   // Event, Certificate, User, etc.
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
