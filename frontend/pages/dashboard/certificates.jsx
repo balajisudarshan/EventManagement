@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { api } from '../../src/lib/api';
 import { useAuth } from '../../src/context/AuthContext';
-import { buildCertificatePreviewSrcDoc } from '../../src/utils/editorDataRenderer';
+import CertificatePreviewFrame from '../../src/components/CertificatePreviewFrame';
 import {
   Award,
   Download,
@@ -229,13 +229,11 @@ export default function MyCertificatesPage() {
               </div>
             </div>
             <div className="p-4 bg-zinc-100 dark:bg-zinc-950 flex justify-center">
-              <iframe
+              <CertificatePreviewFrame
                 title="Certificate Live Preview"
-                srcDoc={buildCertificatePreviewSrcDoc(previewCert.template.editorData, previewCert)}
-                className="w-full border border-zinc-300 dark:border-zinc-800 bg-white"
-                style={{
-                  height: previewCert.template.orientation === 'PORTRAIT' ? 680 : 540
-                }}
+                editorData={previewCert.template.editorData}
+                cert={previewCert}
+                height={previewCert.template.orientation === 'PORTRAIT' ? 680 : 540}
               />
             </div>
           </div>

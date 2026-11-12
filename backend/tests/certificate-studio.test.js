@@ -5,6 +5,7 @@ const request = require('supertest');
 const bcrypt = require('bcryptjs');
 const app = require('../src/app');
 const prisma = require('../src/config/prisma');
+const { generateQrDataUrl } = require('../src/utils/qr');
 
 test('Certificate Template Studio, Direct Issuance & Public Verification Suite', async (t) => {
   const uniqueSuffix = Date.now();
@@ -204,5 +205,58 @@ test('Certificate Template Studio, Direct Issuance & Public Verification Suite',
     assert.strictEqual(pdfRes.status, 200);
     assert.strictEqual(pdfRes.headers['content-type'], 'application/pdf');
     assert.ok(pdfRes.body.slice(0, 5).toString('utf8').startsWith('%PDF-'), 'Response must be a valid PDF binary');
+  });
+
+  await t.test('5. Live X-Client-Origin overrides localhost fallback for QR code & PDF download', async () => {
+    const prevClientUrl = process.env.CLIENT_URL;
+    process.env.CLIENT_URL = 'http://localhost:3000';
+    let liveCertId = null;
+
+    try {
+      const liveOrigin = 'https://cems-live.vercel.app';
+      const issueLiveRes = await request(app)
+        .post('/api/certificates/issue')
+        .set('Authorization', `Bearer ${organizerToken}`)
+        .set('X-Client-Origin', liveOrigin)
+        .send({
+          templateId: createdTemplateId,
+          eventTitle: 'Deployed Origin QR Check',
+          certificateType: 'PARTICIPATION',
+          recipients: [
+            {
+              recipientName: 'Live Origin Recipient',
+              recipientEmail: studentEmail
+            }
+          ]
+        });
+
+      assert.strictEqual(issueLiveRes.status, 201);
+      const liveCert = issueLiveRes.body.certificates[0];
+      liveCertId = liveCert.id;
+
+      const expectedQr = await generateQrDataUrl(`${liveOrigin}/verify-certificate/${liveCert.certificateId}`);
+      assert.strictEqual(
+        liveCert.qrCode,
+        expectedQr,
+        'Stored QR code must encode X-Client-Origin URL instead of stale localhost CLIENT_URL'
+      );
+
+      const pdfLiveRes = await request(app)
+        .get(`/api/certificates/${liveCert.id}/download.pdf`)
+        .set('X-Client-Origin', liveOrigin)
+        .buffer(true);
+
+      assert.strictEqual(pdfLiveRes.status, 200);
+      assert.strictEqual(pdfLiveRes.headers['content-type'], 'application/pdf');
+    } finally {
+      if (prevClientUrl === undefined) {
+        delete process.env.CLIENT_URL;
+      } else {
+        process.env.CLIENT_URL = prevClientUrl;
+      }
+      if (liveCertId) {
+        await prisma.certificate.deleteMany({ where: { id: liveCertId } });
+      }
+    }
   });
 });

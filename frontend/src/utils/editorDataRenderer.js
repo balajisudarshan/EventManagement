@@ -505,7 +505,10 @@ function renderImage(el, variables = {}) {
 function renderQrCode(el, variables, qrDataUrl) {
   const { x, y, width, height, rotation, opacity, properties = {} } = el;
   const rawValue = injectVariables(properties.value || '', variables);
-  const qrSrc = qrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=${Math.round(width)}x${Math.round(height)}&data=${encodeURIComponent(rawValue)}`;
+  const effectiveValue = (!rawValue || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\b/i.test(rawValue))
+    ? (variables.verificationUrl || rawValue || '')
+    : rawValue;
+  const qrSrc = qrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=${Math.round(width)}x${Math.round(height)}&data=${encodeURIComponent(effectiveValue)}`;
   const style = [
     'position:absolute',
     `left:${x}px`,
@@ -638,7 +641,7 @@ export function renderEditorDataToHtml(editorData, variables = {}, qrDataUrl = n
   return `<div style="position:relative;width:${width}px;height:${height}px;${backgroundCss}overflow:hidden;box-sizing:border-box;">\n${renderedElements}\n${fallbackSignatureHtml}\n${fallbackCertIdHtml}\n</div>`;
 }
 
-export function buildCertificatePreviewSrcDoc(editorData, cert) {
+export function buildCertificatePreviewSrcDoc(editorData, cert, liveQrDataUrl = null) {
   if (!editorData || !cert) return '';
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   const issuedDateStr = cert.issueDate ? new Date(cert.issueDate).toLocaleDateString() : '';
@@ -658,7 +661,7 @@ export function buildCertificatePreviewSrcDoc(editorData, cert) {
     ...extraData
   };
 
-  const certHtml = renderEditorDataToHtml(editorData, replacements, cert.qrCode || null);
+  const certHtml = renderEditorDataToHtml(editorData, replacements, liveQrDataUrl || null);
   const width = editorData.width || 1200;
   const height = editorData.height || 900;
 

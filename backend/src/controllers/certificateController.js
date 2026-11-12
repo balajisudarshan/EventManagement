@@ -16,6 +16,40 @@ function generateCertId() {
   return `CERT-CEMS-${new Date().getFullYear()}-${rand}`;
 }
 
+function normalizeOrigin(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
+function isLocalOrigin(origin) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin || '');
+}
+
+/**
+ * Resolve the public frontend origin for QR verification links.
+ * Prefers live non-localhost browser origin headers over localhost fallbacks.
+ */
+function resolveClientUrl(req) {
+  const candidates = [
+    normalizeOrigin(req?.get?.('x-client-origin')),
+    normalizeOrigin(req?.query?.clientOrigin),
+    normalizeOrigin(req?.get?.('origin')),
+    normalizeOrigin(req?.get?.('referer')),
+    normalizeOrigin(process.env.CLIENT_URL),
+    'http://localhost:3000'
+  ].filter(Boolean);
+
+  const liveOrigin = candidates.find((c) => !isLocalOrigin(c));
+  return liveOrigin || candidates[0];
+}
+
 /**
  * Compute SHA-256 content hash for certificate integrity verification
  */
@@ -174,7 +208,7 @@ async function downloadCertificatePdf(req, res) {
       return res.status(404).json({ error: 'Certificate not found.' });
     }
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const clientUrl = resolveClientUrl(req);
     const publicUrl = `${clientUrl}/verify-certificate/${cert.certificateId}`;
     const signatories = cert.template?.signatories || [];
 
@@ -242,7 +276,7 @@ async function generateBulkCertificates(req, res) {
       });
     }
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const clientUrl = resolveClientUrl(req);
     const effectiveTemplateId = templateId || event.certificateTemplates[0]?.id || null;
 
     let generatedCount = 0;
@@ -361,7 +395,7 @@ async function issueCertificates(req, res) {
       return res.status(400).json({ error: 'At least one recipient is required.' });
     }
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const clientUrl = resolveClientUrl(req);
     const issued = [];
     const errors = [];
 

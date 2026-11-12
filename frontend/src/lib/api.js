@@ -12,6 +12,7 @@ async function request(endpoint, options = {}) {
   }
 
   if (typeof window !== 'undefined') {
+    headers['X-Client-Origin'] = window.location.origin;
     const token = localStorage.getItem('cems_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

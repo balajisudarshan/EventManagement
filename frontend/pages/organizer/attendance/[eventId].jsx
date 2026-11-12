@@ -16,7 +16,8 @@ import {
   ArrowLeft,
   Calendar,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 
 export default function AttendanceScannerPage() {
@@ -33,6 +34,7 @@ export default function AttendanceScannerPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [manualPayload, setManualPayload] = useState('');
   const [scanResult, setScanResult] = useState(null); // { status: 'SUCCESS' | 'DUPLICATE' | 'ERROR', message, attendee }
+  const [toast, setToast] = useState(null); // { status, title, message, attendee }
   const [scanning, setScanning] = useState(false);
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
@@ -43,6 +45,9 @@ export default function AttendanceScannerPage() {
   const [bulkUploading, setBulkUploading] = useState(false);
 
   const qrScannerRef = useRef(null);
+  const scanLockRef = useRef(false);
+  const scanHandlerRef = useRef(null);
+  const toastTimerRef = useRef(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !isOrganizer)) {
@@ -73,12 +78,49 @@ export default function AttendanceScannerPage() {
     loadData();
   }, [eventId]);
 
+  const showToast = (nextToast) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    setToast({ ...nextToast, id: Date.now() });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 5000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const stopCamera = async () => {
+    setCameraActive(false);
+    const scanner = qrScannerRef.current;
+    if (scanner) {
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+        scanner.clear();
+      } catch (err) {
+        console.warn('Scanner stop cleanup:', err);
+      } finally {
+        qrScannerRef.current = null;
+      }
+    }
+  };
+
   // Camera QR scanner integration using html5-qrcode
   useEffect(() => {
+    let cancelled = false;
     let html5QrCode = null;
 
     if (cameraActive) {
       import('html5-qrcode').then(({ Html5Qrcode }) => {
+        if (cancelled) return;
         html5QrCode = new Html5Qrcode('qr-reader');
         qrScannerRef.current = html5QrCode;
 
@@ -86,7 +128,9 @@ export default function AttendanceScannerPage() {
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText) => {
-            handleScanPayload(decodedText);
+            if (scanHandlerRef.current) {
+              scanHandlerRef.current(decodedText, true);
+            }
           },
           () => {}
         ).catch((err) => {
@@ -101,14 +145,19 @@ export default function AttendanceScannerPage() {
     }
 
     return () => {
+      cancelled = true;
       if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => html5QrCode.clear()).catch(console.error);
+      }
+      if (qrScannerRef.current === html5QrCode) {
+        qrScannerRef.current = null;
       }
     };
   }, [cameraActive]);
 
-  const handleScanPayload = async (payload) => {
-    if (scanning || !payload) return;
+  const handleScanPayload = async (payload, fromCamera = false) => {
+    if (scanLockRef.current || !payload) return;
+    scanLockRef.current = true;
     setScanning(true);
 
     try {
@@ -118,34 +167,67 @@ export default function AttendanceScannerPage() {
       });
 
       if (res.status === 'DUPLICATE') {
-        setScanResult({
+        const dupResult = {
           status: 'DUPLICATE',
           message: res.message,
           attendee: res.attendee
-        });
-      } else {
-        setScanResult({
-          status: 'SUCCESS',
+        };
+        setScanResult(dupResult);
+        showToast({
+          status: 'DUPLICATE',
+          title: 'Already Checked In',
           message: res.message,
           attendee: res.attendee
         });
+        if (fromCamera) {
+          await stopCamera();
+        }
+      } else {
+        const okResult = {
+          status: 'SUCCESS',
+          message: res.message,
+          attendee: res.attendee
+        };
+        setScanResult(okResult);
+        showToast({
+          status: 'SUCCESS',
+          title: 'Attendance Marked',
+          message: res.message || 'Attendee checked in successfully.',
+          attendee: res.attendee
+        });
+        // Stop camera automatically on successful check-in to confirm scan & block duplicates
+        if (fromCamera) {
+          await stopCamera();
+        }
       }
 
       loadData();
     } catch (err) {
+      const errMsg = err.message || 'Invalid ticket code or verification failure.';
       setScanResult({
         status: 'ERROR',
-        message: err.message || 'Invalid ticket code or verification failure.'
+        message: errMsg
       });
+      showToast({
+        status: 'ERROR',
+        title: 'Scan Failed',
+        message: errMsg
+      });
+      if (fromCamera) {
+        await stopCamera();
+      }
     } finally {
+      scanLockRef.current = false;
       setScanning(false);
     }
   };
 
+  scanHandlerRef.current = handleScanPayload;
+
   const handleManualSubmit = (e) => {
     e.preventDefault();
     if (!manualPayload.trim()) return;
-    handleScanPayload(manualPayload.trim());
+    handleScanPayload(manualPayload.trim(), false);
     setManualPayload('');
   };
 
@@ -206,6 +288,46 @@ export default function AttendanceScannerPage() {
       <Head>
         <title>Attendance Check-in Scanner | CEMS</title>
       </Head>
+
+      {/* Fixed Scan Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed top-20 right-4 z-50 max-w-sm w-full p-4 rounded-none border shadow-xl font-mono transition-all ${
+            toast.status === 'SUCCESS'
+              ? 'bg-emerald-950 text-emerald-100 border-emerald-500'
+              : toast.status === 'DUPLICATE'
+              ? 'bg-amber-950 text-amber-100 border-amber-500'
+              : 'bg-red-950 text-red-100 border-red-500'
+          }`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              {toast.status === 'SUCCESS' && <CheckCircle2 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />}
+              {toast.status === 'DUPLICATE' && <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />}
+              {toast.status === 'ERROR' && <XCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />}
+              <div className="text-xs space-y-1">
+                <p className="font-bold uppercase tracking-wider">{toast.title}</p>
+                <p className="text-[11px] opacity-90">{toast.message}</p>
+                {toast.attendee && (
+                  <p className="text-[11px] font-bold pt-1 border-t border-white/15">
+                    {toast.attendee.name} {toast.attendee.rollNo ? `• ${toast.attendee.rollNo}` : ''}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="p-1 opacity-75 hover:opacity-100"
+              aria-label="Close notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8">
         <Link
@@ -371,6 +493,19 @@ export default function AttendanceScannerPage() {
                       <div className="mt-2 pt-2 border-t border-current/20 text-[11px] font-medium">
                         Attendee: {scanResult.attendee.name} ({scanResult.attendee.rollNo || scanResult.attendee.email})
                       </div>
+                    )}
+                    {!cameraActive && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScanResult(null);
+                          setCameraActive(true);
+                        }}
+                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>Scan Next Attendee</span>
+                      </button>
                     )}
                   </div>
                 </div>

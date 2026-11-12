@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { api } from '../../src/lib/api';
-import { buildCertificatePreviewSrcDoc } from '../../src/utils/editorDataRenderer';
+import CertificatePreviewFrame from '../../src/components/CertificatePreviewFrame';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -259,13 +259,11 @@ export default function VerifyCertificatePage() {
                   <span className="text-[10px] uppercase text-zinc-500 font-bold block">
                     VERIFIED CERTIFICATE RENDER PREVIEW
                   </span>
-                  <iframe
+                  <CertificatePreviewFrame
                     title="Verified Certificate Preview"
-                    srcDoc={buildCertificatePreviewSrcDoc(cert.template.editorData, cert)}
-                    className="w-full border border-zinc-300 dark:border-zinc-800 bg-white"
-                    style={{
-                      height: cert.template.orientation === 'PORTRAIT' ? 680 : 540
-                    }}
+                    editorData={cert.template.editorData}
+                    cert={cert}
+                    height={cert.template.orientation === 'PORTRAIT' ? 680 : 540}
                   />
                 </div>
               )}

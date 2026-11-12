@@ -154,7 +154,10 @@ async function generateCertificatePdfFromEditorData(editorData, variables = {}, 
                });
           } else if (el.type === 'qrcode') {
             const rawValue = injectVariables(properties.value || '', variables);
-            const qrBuf = await generateQrBuffer(rawValue || variables.verificationUrl || 'CEMS');
+            const resolvedQrValue = (!rawValue || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\b/i.test(rawValue))
+              ? (variables.verificationUrl || rawValue || 'CEMS')
+              : rawValue;
+            const qrBuf = await generateQrBuffer(resolvedQrValue);
             doc.image(qrBuf, x, y, { width: elW, height: elH });
           } else if (el.type === 'image' || el.type === 'signature') {
             const imgSrc = properties.src || (el.type === 'signature' ? variables.signatureUrl : '');
