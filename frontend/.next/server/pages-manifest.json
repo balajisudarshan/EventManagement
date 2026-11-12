@@ -1,9 +1,0 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/dashboard/certificates": "pages/dashboard/certificates.js",
-  "/verify-certificate/[id]": "pages/verify-certificate/[id].js",
-  "/organizer/templates/[id]": "pages/organizer/templates/[id].js",
-  "/admin": "pages/admin.js"
-}

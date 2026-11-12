@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST="{\"src\\\\components\\\\editor\\\\TemplateStudio.jsx -> ./CanvasEditor\":{\"id\":\"src\\\\components\\\\editor\\\\TemplateStudio.jsx -> ./CanvasEditor\",\"files\":[\"static/chunks/src_components_editor_CanvasEditor_jsx.js\"]}}"
