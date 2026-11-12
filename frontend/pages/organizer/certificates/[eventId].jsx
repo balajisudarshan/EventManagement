@@ -15,7 +15,8 @@ import {
   Users,
   ShieldAlert,
   RotateCcw,
-  RefreshCw
+  RefreshCw,
+  Upload
 } from 'lucide-react';
 
 export default function CertificateIssuanceHub() {
@@ -25,11 +26,16 @@ export default function CertificateIssuanceHub() {
 
   const [event, setEvent] = useState(null);
   const [registrations, setRegistrations] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Issuance configuration
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [selectedType, setSelectedType] = useState('PARTICIPATION');
   const [overrideAttendance, setOverrideAttendance] = useState(false);
+  const [signatureUrl, setSignatureUrl] = useState('');
+  const [signatoryName, setSignatoryName] = useState('');
+  const [uploadingSignature, setUploadingSignature] = useState(false);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -42,12 +48,19 @@ export default function CertificateIssuanceHub() {
     if (!eventId) return;
     try {
       setLoading(true);
-      const [evRes, regsRes] = await Promise.all([
+      const [evRes, regsRes, tplRes] = await Promise.all([
         api.get(`/events/${eventId}`),
-        api.get(`/registrations/events/${eventId}`)
+        api.get(`/registrations/events/${eventId}`),
+        api.get('/certificates/templates').catch(() => ({ templates: [] }))
       ]);
       setEvent(evRes.event);
       setRegistrations(regsRes.registrations || []);
+      const tplList = tplRes.templates || [];
+      setTemplates(tplList);
+      if (!selectedTemplateId && tplList.length > 0) {
+        const linked = tplList.find((t) => t.eventId === eventId);
+        if (linked) setSelectedTemplateId(linked.id);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -59,6 +72,30 @@ export default function CertificateIssuanceHub() {
     loadData();
   }, [eventId]);
 
+  const handleSignatureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => setSignatureUrl(ev.target.result);
+    reader.readAsDataURL(file);
+
+    try {
+      setUploadingSignature(true);
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('folder', 'cems_signatures');
+      const res = await api.upload('/upload', fd);
+      if (res?.url) {
+        setSignatureUrl(res.url);
+      }
+    } catch (err) {
+      console.warn('Signature upload fallback kept:', err.message);
+    } finally {
+      setUploadingSignature(false);
+    }
+  };
+
   const handleGenerateBulk = async () => {
     const confirm = window.confirm(
       `Trigger bulk certificate generation for eligible participants of "${event.title}"?`
@@ -68,8 +105,13 @@ export default function CertificateIssuanceHub() {
     try {
       setGenerating(true);
       const res = await api.post(`/certificates/events/${eventId}/generate`, {
+        templateId: selectedTemplateId || undefined,
         certificateType: selectedType,
-        overrideAttendanceCheck: overrideAttendance
+        overrideAttendanceCheck: overrideAttendance,
+        credentialData: {
+          ...(signatureUrl ? { signatureUrl } : {}),
+          ...(signatoryName.trim() ? { signatoryName: signatoryName.trim() } : {})
+        }
       });
       alert(res.message);
       loadData();
@@ -158,18 +200,42 @@ export default function CertificateIssuanceHub() {
           </div>
 
           {/* Form Controls */}
-          <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-4 text-xs">
-            <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-              Bulk Certificate Issuance Controls
-            </h3>
+          <div className="p-5 rounded-none bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4 text-xs font-mono">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 uppercase">
+                Bulk Certificate Issuance Controls
+              </h3>
+              <Link
+                href="/organizer/templates"
+                className="text-[11px] font-bold underline text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white"
+              >
+                OPEN TEMPLATE STUDIO
+              </Link>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block font-medium mb-1">Certificate Type to Issue *</label>
+                <label className="block font-medium mb-1 uppercase text-[10px] text-zinc-500">Certificate Template</label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs"
+                >
+                  <option value="">Default CEMS Certificate Layout</option>
+                  {templates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name} ({tpl.orientation})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1 uppercase text-[10px] text-zinc-500">Certificate Type to Issue *</label>
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs"
+                  className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs"
                 >
                   <option value="PARTICIPATION">Certificate of Participation</option>
                   <option value="WINNER">Certificate of Excellence (Winner)</option>
@@ -179,16 +245,52 @@ export default function CertificateIssuanceHub() {
                 </select>
               </div>
 
-              <div className="flex items-center gap-3 pt-6">
+              <div className="flex items-center gap-3 pt-5">
                 <input
                   type="checkbox"
                   id="overrideAttendanceCheck"
                   checked={overrideAttendance}
                   onChange={(e) => setOverrideAttendance(e.target.checked)}
-                  className="w-4 h-4 rounded text-zinc-900"
+                  className="w-4 h-4 text-zinc-900"
                 />
                 <label htmlFor="overrideAttendanceCheck" className="cursor-pointer font-medium text-zinc-700 dark:text-zinc-300">
-                  Override attendance rule (issue to all confirmed registrants)
+                  Override attendance rule
+                </label>
+              </div>
+            </div>
+
+            {/* Signature Upload */}
+            <div className="p-3.5 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1 flex-1">
+                <label className="block text-[10px] font-bold uppercase text-zinc-700 dark:text-zinc-300">
+                  AUTHORIZED SIGNATURE (DISPLAYED ON CERTIFICATE)
+                </label>
+                <input
+                  type="text"
+                  value={signatoryName}
+                  onChange={(e) => setSignatoryName(e.target.value)}
+                  placeholder="Signatory Name (optional, e.g. Dr. Ramesh Kumar)"
+                  className="w-full max-w-sm px-2.5 py-1.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                {signatureUrl && (
+                  <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-700 bg-white p-1">
+                    <img src={signatureUrl} alt="Signature" className="h-9 max-w-[120px] object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => setSignatureUrl('')}
+                      className="text-[10px] text-red-500 font-bold px-1"
+                    >
+                      X
+                    </button>
+                  </div>
+                )}
+                <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-black dark:bg-white text-white dark:text-black font-bold text-[11px] cursor-pointer hover:opacity-90 whitespace-nowrap">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{uploadingSignature ? 'UPLOADING...' : signatureUrl ? 'CHANGE SIGN' : 'UPLOAD SIGN'}</span>
+                  <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
                 </label>
               </div>
             </div>

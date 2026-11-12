@@ -11,11 +11,15 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "html5-qrcode": "^2.3.8",
+    "konva": "^9.3.22",
     "lucide-react": "^1.16.0",
     "next": "^14.2.25",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.6.0"
+    "react-konva": "^18.2.16",
+    "tailwind-merge": "^2.6.0",
+    "use-image": "^1.1.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
@@ -23,4 +27,3 @@
     "tailwindcss": "^3.4.17"
   }
 }
-

@@ -17,7 +17,9 @@ import {
   LogIn,
   Search,
   ExternalLink,
-  X
+  X,
+  LayoutTemplate,
+  Send
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -25,7 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const { user, logout, isOrganizer, isApprover, isAdmin, isIeeeVerified } = useAuth();
 
   const isActive = (path) => {
-    if (path === '/') return router.pathname === '/';
+    if (path === '/' || path === '/organizer') return router.pathname === path;
     return router.pathname.startsWith(path);
   };
 
@@ -162,6 +164,28 @@ export default function Sidebar({ isOpen, onClose }) {
                     <div className="flex items-center gap-2.5">
                       <PlusSquare className="w-3.5 h-3.5" />
                       <span>New Event Proposal</span>
+                    </div>
+                  </NextLink>
+
+                  <NextLink
+                    href="/organizer/templates"
+                    onClick={onClose}
+                    className={navItemClass('/organizer/templates')}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LayoutTemplate className="w-3.5 h-3.5" />
+                      <span>Cert Templates</span>
+                    </div>
+                  </NextLink>
+
+                  <NextLink
+                    href="/organizer/certificates/issue"
+                    onClick={onClose}
+                    className={navItemClass('/organizer/certificates/issue')}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Send className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Issue Certificates</span>
                     </div>
                   </NextLink>
                 </>

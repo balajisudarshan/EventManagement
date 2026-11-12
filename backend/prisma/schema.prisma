@@ -72,6 +72,11 @@ enum CertificateStatus {
   REVOKED
 }
 
+enum TemplateOrientation {
+  LANDSCAPE
+  PORTRAIT
+}
+
 enum NotificationType {
   REGISTRATION
   WAITLIST
@@ -100,6 +105,7 @@ model User {
   assignedBodies   OrganizerAssignment[]
   registrations    Registration[]
   certificates     Certificate[]
+  certificateTemplates CertificateTemplate[]
   notifications    Notification[]
   auditLogs        AuditLog[]
   attendancesMarked Attendance[]
@@ -246,45 +252,62 @@ model Attendance {
 }
 
 model CertificateTemplate {
-  id             String        @id @default(uuid())
-  eventId        String?
-  name           String
-  signatories    Json?         @default("[]") // [{ name, role, title }]
-  layoutConfig   Json?         @default("{}") // theme color, border style, etc.
-  backgroundUrl  String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id               String              @id @default(uuid())
+  eventId          String?
+  createdById      String?
+  name             String
+  description      String?
+  orientation      TemplateOrientation @default(LANDSCAPE)
+  thumbnailUrl     String?
+  editorData       Json?               // Konva canvas JSON: { version, width, height, background, elements[] }
+  schemaDefinition Json?               @default("[]") // Array of { key, label, type, required }
+  signatories      Json?               @default("[]") // [{ name, role, title }]
+  layoutConfig     Json?               @default("{}") // theme color, border style, etc.
+  backgroundUrl    String?
+  isPublished      Boolean             @default(true)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
-  event          Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  certificates   Certificate[]
+  event            Event?              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdBy        User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  certificates     Certificate[]
+
+  @@index([eventId])
+  @@index([createdById])
 }
 
 model Certificate {
   id              String            @id @default(uuid())
-  certificateId   String            @unique // e.g., CERT-2026-XXXXXX
-  registrationId  String            @unique
-  eventId         String
-  userId          String
+  certificateId   String            @unique // e.g., CERT-CEMS-2026-XXXXXX
+  registrationId  String?           @unique
+  eventId         String?
+  userId          String?
   recipientName   String
+  recipientEmail  String?
   eventTitle      String
+  credentialData  Json?             @default("{}")
+  contentHash     String?
   issueDate       DateTime          @default(now())
+  expiresAt       DateTime?
   type            CertificateType   @default(PARTICIPATION)
   templateId      String?
   status          CertificateStatus @default(VALID)
   revokeReason    String?
   pdfUrl          String?
+  imageUrl        String?
   qrCode          String?           @db.Text
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
-  registration    Registration      @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-  event           Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template        CertificateTemplate? @relation(fields: [templateId], references: [id])
+  registration    Registration?        @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  event           Event?               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user            User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template        CertificateTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   @@index([certificateId])
   @@index([eventId])
   @@index([userId])
+  @@index([recipientEmail])
 }
 
 model Notification {

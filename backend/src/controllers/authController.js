@@ -71,6 +71,15 @@ async function register(req, res) {
 
     const token = createToken(user);
 
+    // Link any certificates previously issued to this user's email
+    await prisma.certificate.updateMany({
+      where: {
+        userId: null,
+        recipientEmail: { equals: emailNormalized, mode: 'insensitive' }
+      },
+      data: { userId: user.id }
+    });
+
     // Welcome in-app notification
     await prisma.notification.create({
       data: {

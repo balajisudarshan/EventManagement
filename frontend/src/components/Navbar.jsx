@@ -34,6 +34,10 @@ export default function Navbar({ onToggleSidebar }) {
     if (path === '/dashboard/certificates') return 'MY CERTIFICATES';
     if (path === '/dashboard/ieee') return 'IEEE MEMBERSHIP';
     if (path === '/organizer/events/create') return 'PROPOSE EVENT';
+    if (path === '/organizer/templates/create') return 'TEMPLATE CREATOR';
+    if (path.startsWith('/organizer/templates/')) return 'TEMPLATE EDITOR';
+    if (path === '/organizer/templates') return 'CERTIFICATE TEMPLATES';
+    if (path === '/organizer/certificates/issue') return 'ISSUE CERTIFICATES';
     if (path.startsWith('/organizer/attendance/')) return 'ATTENDANCE SCANNER';
     if (path.startsWith('/organizer/certificates/')) return 'CERTIFICATE HUB';
     if (path.startsWith('/organizer')) return 'ORGANIZER HUB';
