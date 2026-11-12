@@ -267,7 +267,7 @@ export default function CreateEventPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Next-Gen Cloud & Microservices Summit 2026"
+                placeholder="Enter event title"
                 required
                 className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-semibold"
               />
@@ -364,7 +364,7 @@ export default function CreateEventPage() {
                   type="text"
                   value={venue}
                   onChange={(e) => setVenue(e.target.value)}
-                  placeholder="e.g. Auditorium Hall C or Google Meet Link"
+                  placeholder="Enter venue or online meeting link"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
                 />
@@ -388,7 +388,7 @@ export default function CreateEventPage() {
                   type="text"
                   value={eligibility}
                   onChange={(e) => setEligibility(e.target.value)}
-                  placeholder="e.g. Open to all branches / CSE 3rd Year"
+                  placeholder="Specify department, year, or open eligibility"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
                 />
               </div>
@@ -564,7 +564,7 @@ export default function CreateEventPage() {
                     type="text"
                     value={field.label}
                     onChange={(e) => updateCustomField(idx, 'label', e.target.value)}
-                    placeholder="Field Label (e.g. GitHub URL)"
+                    placeholder="Enter field label"
                     className="flex-1 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs"
                   />
 

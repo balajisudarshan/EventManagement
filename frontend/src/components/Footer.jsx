@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 export default function Footer() {
   return (
@@ -9,15 +10,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           <div className="space-y-3 md:col-span-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-none bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xs">
-                ▲
-              </div>
+              <BrandLogo size="sm" />
               <span className="font-bold text-sm text-zinc-950 dark:text-white tracking-tight font-mono">
                 CEMS
               </span>
             </div>
             <p className="text-zinc-500 leading-relaxed text-xs">
-              College Event Management System. Enterprise platform for workshops, hackathons, IEEE societies, and instant digital certificates.
+              College Event Management System. Unified platform for campus workshops, hackathons, IEEE chapters, and verifiable digital certificates.
             </p>
           </div>
 
@@ -74,25 +73,21 @@ export default function Footer() {
 
           <div>
             <h4 className="font-bold text-zinc-950 dark:text-white text-xs font-mono uppercase tracking-wider mb-3">
-              Institutional Standards
+              Verification & Trust
             </h4>
             <p className="text-zinc-500 leading-relaxed mb-3 text-xs">
-              Compliant with IEEE Std 830 / ISO/IEC/IEEE 29148 requirements specifications with atomic race-condition safety.
+              Official campus event ticketing, real-time attendance tracking, and cryptographically signed digital credentials.
             </p>
             <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Verifiable Cryptographic Hashes</span>
+              <span>Tamper-Proof Digital Credentials</span>
             </div>
           </div>
         </div>
 
         <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-500 font-mono text-[11px]">
           <p>© {new Date().getFullYear()} College Event Management System (CEMS). All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <span>PURE BLACK / WHITE THEME</span>
-            <span>•</span>
-            <span>SHARP BORDERS</span>
-          </div>
+          <span>IEEE &amp; CAMPUS CHAPTER PORTAL</span>
         </div>
       </div>
     </footer>

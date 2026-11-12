@@ -234,7 +234,7 @@ export default function EventDetailsPage() {
                         type="text"
                         value={teamName}
                         onChange={(e) => setTeamName(e.target.value)}
-                        placeholder="e.g. CodeWarriors"
+                        placeholder="Enter your team name"
                         className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-white"
                       />
                     </div>

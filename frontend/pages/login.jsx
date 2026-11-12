@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../src/context/AuthContext';
+import BrandLogo from '../src/components/BrandLogo';
 import { LogIn } from 'lucide-react';
 
 export default function LoginPage() {
@@ -29,27 +30,20 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-  };
-
   return (
     <>
       <Head>
         <title>Sign In | CEMS</title>
       </Head>
 
-      <div className="max-w-md mx-auto py-10 space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-8 h-8 rounded-none bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xs mx-auto border border-zinc-800 dark:border-zinc-200">
-            ▲
-          </div>
+      <div className="max-w-md mx-auto py-12 space-y-6">
+        <div className="text-center space-y-2.5">
+          <BrandLogo size="lg" className="mx-auto" />
           <h1 className="text-xl font-bold tracking-tight text-zinc-950 dark:text-white font-mono uppercase">
             Sign in to CEMS
           </h1>
           <p className="text-xs text-zinc-500 font-mono">
-            ACCESS EVENT TICKETS & VERIFIED CREDENTIALS
+            ACCESS EVENT TICKETS &amp; VERIFIED CREDENTIALS
           </p>
         </div>
 
@@ -70,7 +64,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@cems.edu"
+                placeholder="Enter your college email"
                 required
                 className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
               />
@@ -84,7 +78,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 required
                 className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
               />
@@ -105,60 +99,6 @@ export default function LoginPage() {
             <Link href="/register" className="font-bold text-zinc-950 dark:text-white hover:underline">
               REGISTER
             </Link>
-          </div>
-        </div>
-
-        {/* Quick Demo Logins Helper */}
-        <div className="p-4 rounded-none border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black space-y-2.5 text-xs font-mono">
-          <span className="text-[10px] uppercase font-mono text-zinc-500 block font-bold">
-            QUICK TEST CREDENTIALS (CLICK TO PREFILL):
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('ieee.student@cems.edu', 'Student@123')}
-              className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-left hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
-            >
-              <span className="font-bold text-amber-500 block">IEEE Member</span>
-              <span className="text-[10px] text-zinc-500 truncate block">ieee.student@cems.edu</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('student@cems.edu', 'Student@123')}
-              className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-left hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
-            >
-              <span className="font-bold text-zinc-900 dark:text-zinc-100 block">General Student</span>
-              <span className="text-[10px] text-zinc-500 truncate block">student@cems.edu</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('organizer@cems.edu', 'Organizer@123')}
-              className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-left hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
-            >
-              <span className="font-bold text-emerald-500 block">Event Organizer</span>
-              <span className="text-[10px] text-zinc-500 truncate block">organizer@cems.edu</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('approver@cems.edu', 'Approver@123')}
-              className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-left hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
-            >
-              <span className="font-bold text-blue-500 block">Faculty Approver</span>
-              <span className="text-[10px] text-zinc-500 truncate block">approver@cems.edu</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin@cems.edu', 'Admin@123')}
-              className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-left hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors sm:col-span-2"
-            >
-              <span className="font-bold text-purple-500 block">System Administrator</span>
-              <span className="text-[10px] text-zinc-500 truncate block">admin@cems.edu</span>
-            </button>
           </div>
         </div>
       </div>

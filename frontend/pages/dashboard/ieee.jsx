@@ -244,7 +244,7 @@ export default function IeeeMembershipPage() {
                       type="text"
                       value={membershipNumber}
                       onChange={(e) => setMembershipNumber(e.target.value)}
-                      placeholder="e.g. 98765432"
+                      placeholder="Enter your IEEE membership number"
                       required
                       className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                     />

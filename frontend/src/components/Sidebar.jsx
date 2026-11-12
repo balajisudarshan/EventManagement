@@ -2,6 +2,7 @@ import React from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
+import BrandLogo from './BrandLogo';
 import {
   Calendar,
   Award,
@@ -44,9 +45,7 @@ export default function Sidebar({ isOpen, onClose }) {
       <div className="space-y-6">
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <NextLink href="/" onClick={onClose} className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-none bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xs border border-zinc-800 dark:border-zinc-200 transition-transform group-hover:scale-105">
-              ▲
-            </div>
+            <BrandLogo size="md" className="transition-transform group-hover:scale-105" />
             <div className="flex flex-col">
               <span className="font-bold text-xs tracking-tight text-zinc-950 dark:text-white leading-none">
                 CEMS

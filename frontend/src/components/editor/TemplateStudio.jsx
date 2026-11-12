@@ -53,14 +53,19 @@ export default function TemplateStudio({ templateId = null }) {
   // Available events to optionally bind template
   const [events, setEvents] = useState([]);
 
-  // Preview variable substitution test values
-  const [testValues, setTestValues] = useState({
-    recipientName: 'Alex Mercer',
-    eventTitle: 'National AI & Robotics Hackathon 2026',
-    courseTitle: 'National AI & Robotics Hackathon 2026',
-    issuedAt: new Date().toLocaleDateString(),
-    certificateId: 'CERT-CEMS-2026-DEMO99',
-    verificationUrl: 'https://cems.edu/verify-certificate/CERT-CEMS-2026-DEMO99'
+  // Preview variable substitution values (uses live browser origin)
+  const [testValues, setTestValues] = useState(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const year = new Date().getFullYear();
+    const previewId = `CERT-CEMS-${year}-PREVIEW`;
+    return {
+      recipientName: 'Recipient Name',
+      eventTitle: 'Event / Program Title',
+      courseTitle: 'Event / Program Title',
+      issuedAt: new Date().toLocaleDateString(),
+      certificateId: previewId,
+      verificationUrl: origin ? `${origin}/verify-certificate/${previewId}` : `/verify-certificate/${previewId}`
+    };
   });
 
   useEffect(() => {
@@ -396,7 +401,7 @@ export default function TemplateStudio({ templateId = null }) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Hackathon Winner 2026"
+                placeholder="Enter template name"
                 className="w-full px-2.5 py-1.5 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs focus:outline-none focus:border-black dark:focus:border-white"
               />
             </div>

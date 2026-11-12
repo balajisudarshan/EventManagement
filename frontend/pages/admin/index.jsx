@@ -761,7 +761,7 @@ export default function AdminPage() {
                     type="text"
                     value={newBodyName}
                     onChange={(e) => setNewBodyName(e.target.value)}
-                    placeholder="e.g. ACM Student Chapter"
+                    placeholder="Enter club or society name"
                     required
                     className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                   />
@@ -823,7 +823,7 @@ export default function AdminPage() {
                   rows={6}
                   value={bulkCsvText}
                   onChange={(e) => setBulkCsvText(e.target.value)}
-                  placeholder="IEEE-991122, student@cems.edu, Student Member, 2027-12-31"
+                  placeholder="Enter membershipNumber, email, grade, expiryDate (one per line)"
                   required
                   className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 font-mono text-xs text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                 />
@@ -946,7 +946,7 @@ export default function AdminPage() {
                         type="text"
                         value={promoteIeeeNumber}
                         onChange={(e) => setPromoteIeeeNumber(e.target.value)}
-                        placeholder="e.g. 98765432"
+                        placeholder="Enter IEEE membership number"
                         className="w-full px-2.5 py-1.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800"
                       />
                     </div>

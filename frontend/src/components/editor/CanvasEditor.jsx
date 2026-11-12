@@ -157,7 +157,8 @@ function QrCodeElement({ el, variables, isSelected, onSelect, onChange }) {
 
   useEffect(() => {
     let active = true;
-    QRCode.toDataURL(rawValue || 'https://cems.edu/verify', {
+    const fallbackUrl = typeof window !== 'undefined' ? `${window.location.origin}/verify-certificate/search` : '/verify-certificate/search';
+    QRCode.toDataURL(rawValue || fallbackUrl, {
       width: Math.max(120, Math.round(el.width)),
       margin: 1,
       color: { dark: '#000000', light: '#ffffff' }

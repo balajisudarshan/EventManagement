@@ -316,7 +316,7 @@ export default function OrganizerDashboard() {
                     type="text"
                     value={announcementTitle}
                     onChange={(e) => setAnnouncementTitle(e.target.value)}
-                    placeholder="e.g. Workshop Room Relocated"
+                    placeholder="Enter announcement title"
                     required
                     className="w-full px-3 py-2 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                   />

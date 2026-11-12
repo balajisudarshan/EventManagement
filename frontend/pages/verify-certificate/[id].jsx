@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { api } from '../../src/lib/api';
 import CertificatePreviewFrame from '../../src/components/CertificatePreviewFrame';
+import BrandLogo from '../../src/components/BrandLogo';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -96,9 +97,7 @@ export default function VerifyCertificatePage() {
 
         {/* Search Bar Header */}
         <div className="p-6 md:p-8 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black text-center space-y-3">
-          <div className="w-8 h-8 rounded-none bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xs mx-auto border border-zinc-800 dark:border-zinc-200">
-            ▲
-          </div>
+          <BrandLogo size="lg" className="mx-auto" />
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-950 dark:text-white font-mono uppercase">
             Certificate Authenticity Verification
           </h1>
@@ -111,7 +110,7 @@ export default function VerifyCertificatePage() {
               type="text"
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
-              placeholder="ENTER CERTIFICATE ID (e.g. CERT-CEMS-2026-XXXXXX)"
+              placeholder="Enter Certificate ID"
               className="flex-1 px-3 py-2.5 rounded-none bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs font-mono text-zinc-950 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
             />
             <button

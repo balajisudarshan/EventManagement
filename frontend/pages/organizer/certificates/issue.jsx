@@ -215,7 +215,7 @@ export default function DirectCertificateIssuancePage() {
 
   const downloadCsvSample = () => {
     const headers = ['recipientName', 'recipientEmail', ...schemaFields.map((f) => f.key)].join(',');
-    const sample = ['Jane Doe', 'student@cems.edu', ...schemaFields.map((f) => `Sample ${f.label || f.key}`)].join(',');
+    const sample = ['Recipient Name', 'recipient@college.edu', ...schemaFields.map((f) => f.label || f.key)].join(',');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(`${headers}\n${sample}\n`);
     a.download = `${selectedTemplate?.name || 'certificates'}-recipients.csv`;
@@ -492,7 +492,7 @@ export default function DirectCertificateIssuancePage() {
                     type="text"
                     value={customEventTitle}
                     onChange={(e) => setCustomEventTitle(e.target.value)}
-                    placeholder={selectedTemplate?.name || 'e.g. Cloud Workshop 2026'}
+                    placeholder={selectedTemplate?.name || 'Enter program or event title'}
                     className="w-full px-3 py-2 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800"
                   />
                 </div>
@@ -511,7 +511,7 @@ export default function DirectCertificateIssuancePage() {
                     type="text"
                     value={signatoryName}
                     onChange={(e) => setSignatoryName(e.target.value)}
-                    placeholder="Signatory Name (optional, e.g. Dr. Ramesh Kumar)"
+                    placeholder="Signatory name (optional)"
                     className="w-full max-w-sm mt-1 px-2.5 py-1.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs"
                   />
                 </div>
@@ -650,7 +650,7 @@ export default function DirectCertificateIssuancePage() {
                             type="email"
                             value={row.recipientEmail}
                             onChange={(e) => updateCell(idx, 'recipientEmail', e.target.value)}
-                            placeholder="student@cems.edu"
+                            placeholder="Recipient email"
                             className="w-full px-2 py-1.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800"
                           />
                         </td>

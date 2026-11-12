@@ -269,7 +269,7 @@ export default function CertificateIssuanceHub() {
                   type="text"
                   value={signatoryName}
                   onChange={(e) => setSignatoryName(e.target.value)}
-                  placeholder="Signatory Name (optional, e.g. Dr. Ramesh Kumar)"
+                  placeholder="Signatory name (optional)"
                   className="w-full max-w-sm px-2.5 py-1.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 text-xs"
                 />
               </div>
