@@ -7,7 +7,8 @@ const {
   changePassword,
   listUsers,
   updateUserRole,
-  toggleUserStatus
+  toggleUserStatus,
+  promoteUser
 } = require('../controllers/authController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
@@ -24,6 +25,7 @@ router.put('/change-password', requireAuth, changePassword);
 
 // Admin-only user management routes
 router.get('/users', requireAuth, requireRole(['ADMIN']), listUsers);
+router.post('/users/:userId/promote', requireAuth, requireRole(['ADMIN']), promoteUser);
 router.patch('/users/:userId/role', requireAuth, requireRole(['ADMIN']), updateUserRole);
 router.patch('/users/:userId/status', requireAuth, requireRole(['ADMIN']), toggleUserStatus);
 

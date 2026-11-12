@@ -384,6 +384,187 @@ async function toggleUserStatus(req, res) {
   }
 }
 
+/**
+ * Admin: Unified User Promotion & IEEE Membership Assignment
+ * Supports: Normal -> IEEE Member, IEEE -> Organizer/Approver/Admin, or role + IEEE status updates
+ */
+async function promoteUser(req, res) {
+  try {
+    const { userId } = req.params;
+    const {
+      role,
+      ieeeStatus, // 'VERIFIED' | 'NONE' | 'REVOKED'
+      membershipNumber,
+      grade,
+      expiryDate,
+      organizingBodyId
+    } = req.body;
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { ieeeMembership: true }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (role && !['STUDENT', 'ORGANIZER', 'APPROVER', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid user role specified.' });
+    }
+
+    if (userId === req.user.id && role && role !== 'ADMIN') {
+      return res.status(400).json({ error: 'You cannot demote your own Admin account.' });
+    }
+
+    const oldRole = targetUser.role;
+    const oldIeee = targetUser.ieeeMembership?.status || 'NONE';
+
+    // Update role if provided
+    if (role && role !== targetUser.role) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role }
+      });
+    }
+
+    // Update IEEE membership status if requested
+    if (ieeeStatus === 'VERIFIED') {
+      const defaultExpiry = new Date();
+      defaultExpiry.setFullYear(defaultExpiry.getFullYear() + 1);
+      const parsedExpiry = expiryDate ? new Date(expiryDate) : (
+        targetUser.ieeeMembership?.expiryDate && new Date(targetUser.ieeeMembership.expiryDate) > new Date()
+          ? targetUser.ieeeMembership.expiryDate
+          : defaultExpiry
+      );
+
+      if (targetUser.ieeeMembership) {
+        const updateData = {
+          status: 'VERIFIED',
+          verifiedById: req.user.id,
+          grade: grade || targetUser.ieeeMembership.grade || 'Student Member',
+          expiryDate: parsedExpiry,
+          rejectionReason: null
+        };
+        if (membershipNumber && membershipNumber.trim() && membershipNumber.trim() !== targetUser.ieeeMembership.membershipNumber) {
+          const dup = await prisma.ieeeMembership.findUnique({
+            where: { membershipNumber: membershipNumber.trim() }
+          });
+          if (dup && dup.userId !== userId) {
+            return res.status(409).json({ error: 'IEEE membership number is already assigned to another account.' });
+          }
+          updateData.membershipNumber = membershipNumber.trim();
+        }
+        await prisma.ieeeMembership.update({
+          where: { userId },
+          data: updateData
+        });
+      } else {
+        let finalNumber = membershipNumber?.trim();
+        if (finalNumber) {
+          const dup = await prisma.ieeeMembership.findUnique({
+            where: { membershipNumber: finalNumber }
+          });
+          if (dup) {
+            return res.status(409).json({ error: 'IEEE membership number is already assigned to another account.' });
+          }
+        } else {
+          finalNumber = `IEEE-${Math.floor(10000000 + Math.random() * 89999999)}`;
+        }
+
+        await prisma.ieeeMembership.create({
+          data: {
+            userId,
+            membershipNumber: finalNumber,
+            grade: grade || 'Student Member',
+            expiryDate: parsedExpiry,
+            status: 'VERIFIED',
+            verifiedById: req.user.id
+          }
+        });
+      }
+    } else if (ieeeStatus === 'REVOKED' || ieeeStatus === 'NONE') {
+      if (targetUser.ieeeMembership) {
+        await prisma.ieeeMembership.delete({
+          where: { userId }
+        });
+      }
+    }
+
+    // Optional organizing body assignment when promoting to ORGANIZER
+    if ((role === 'ORGANIZER' || targetUser.role === 'ORGANIZER') && organizingBodyId) {
+      await prisma.organizerAssignment.upsert({
+        where: {
+          userId_organizingBodyId: {
+            userId,
+            organizingBodyId
+          }
+        },
+        update: {},
+        create: {
+          userId,
+          organizingBodyId
+        }
+      });
+    }
+
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        rollNo: true,
+        department: true,
+        role: true,
+        isActive: true,
+        ieeeMembership: true,
+        assignedBodies: {
+          include: {
+            organizingBody: true
+          }
+        }
+      }
+    });
+
+    await logAuditEvent({
+      actor: req.user,
+      action: 'USER_PROMOTED',
+      entity: 'User',
+      entityId: userId,
+      oldValue: { role: oldRole, ieeeStatus: oldIeee },
+      newValue: {
+        role: updatedUser.role,
+        ieeeStatus: updatedUser.ieeeMembership?.status || 'NONE'
+      },
+      req
+    });
+
+    const summaryParts = [];
+    if (role && role !== oldRole) summaryParts.push(`Role: ${role}`);
+    if (ieeeStatus === 'VERIFIED') summaryParts.push('IEEE Membership: VERIFIED');
+    if (ieeeStatus === 'REVOKED' || ieeeStatus === 'NONE') summaryParts.push('IEEE Membership: Standard');
+
+    await prisma.notification.create({
+      data: {
+        userId,
+        title: 'Account Access & Tier Updated',
+        message: `Your account was updated by admin ${req.user.name} (${summaryParts.join(' • ') || updatedUser.role}).`,
+        type: 'SYSTEM',
+        link: '/profile'
+      }
+    });
+
+    return res.json({
+      message: `${updatedUser.name} updated successfully (${updatedUser.role}${updatedUser.ieeeMembership?.status === 'VERIFIED' ? ' + IEEE Verified' : ''}).`,
+      user: updatedUser
+    });
+  } catch (err) {
+    console.error('Promote user error:', err);
+    return res.status(500).json({ error: 'Failed to promote user.' });
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -392,6 +573,7 @@ module.exports = {
   changePassword,
   listUsers,
   updateUserRole,
-  toggleUserStatus
+  toggleUserStatus,
+  promoteUser
 };
 
